@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ollama Test</title>
+</head>
+<body>
+  <h1>Chat with my site</h1>
+  <input id="msg" placeholder="Type something" />
+  <button id="send">Send</button>
+  <pre id="out"></pre>
+
+  <script>
+    document.getElementById('send').onclick = async () => {
+      const message = document.getElementById('msg').value;
+      const out = document.getElementById('out');
+      out.textContent = 'Thinking...';
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await res.json();
+      out.textContent = data.reply || JSON.stringify(data, null, 2);
+    };
+  </script>
+</body>
+</html>
