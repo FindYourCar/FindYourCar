@@ -3,143 +3,1559 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FindMyCar Chat</title>
+  <meta name="description" content="FindMyCar — AI-powered car discovery assistant. Talk to an advisor and find the right car in minutes." />
+  <title>FindMyCar — Talk to an AI advisor. Find the right car.</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --bg: #0a0908;
+      --bg-2: #141210;
+      --bg-3: #1c1916;
+      --border: rgba(245, 241, 234, 0.08);
+      --border-strong: rgba(245, 241, 234, 0.16);
+      --text: #f5f1ea;
+      --text-bright: #f9fafb;
+      --muted: #8a8178;
+      --amber: #fbbf24;
+      --bronze: #d97706;
+      --deep: #92400e;
+    }
+
+    /* ============================================================
+       BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .chat-wrap {
-      width: min(800px, 92vw);
-      background: #1a1a1a;
-      border: 1px solid #2d2d2d;
-      border-radius: 16px;
-      padding: 20px;
-    }
-
-    .messages {
-      height: 420px;
-      overflow-y: auto;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      background: #151515;
-    }
-
-    .msg {
-      margin-bottom: 12px;
-      padding: 12px 14px;
-      border-radius: 12px;
+      font-family: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.5;
-      white-space: pre-wrap;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
-
-    .user {
-      background: #2d4d3a;
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Fraunces', Georgia, serif;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+      margin: 0;
     }
-
-    .assistant {
-      background: #262626;
-    }
-
-    form {
-      display: flex;
-      gap: 10px;
-    }
-
-    input {
-      flex: 1;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid #333;
-      background: #101010;
-      color: white;
-    }
-
+    p { margin: 0; }
+    a { color: inherit; text-decoration: none; }
     button {
-      padding: 14px 18px;
-      border: 0;
-      border-radius: 12px;
-      background: #d6b36a;
-      color: #111;
-      font-weight: bold;
+      font-family: inherit;
+      color: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+    input, textarea {
+      font-family: inherit;
+      color: var(--text);
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    .italic { font-style: italic; }
+    .display { font-family: 'Fraunces', Georgia, serif; }
+
+    /* ============================================================
+       LAYOUT HELPERS
+       ============================================================ */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .container-narrow { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+    .container-wide { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+    /* ============================================================
+       AMBIENT BACKGROUND
+       ============================================================ */
+    .ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+    .orb-1 { width: 600px; height: 600px; top: -200px; right: -200px; background: rgba(251, 191, 36, 0.12); }
+    .orb-2 { width: 500px; height: 500px; top: 400px; left: -200px; background: rgba(217, 119, 6, 0.08); }
+    .orb-3 { width: 700px; height: 400px; bottom: -200px; left: 50%; transform: translateX(-50%); background: rgba(251, 191, 36, 0.06); }
+
+    .grain::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+      opacity: 0.08;
+      mix-blend-mode: overlay;
+    }
+
+    .page { position: relative; z-index: 2; }
+
+    /* ============================================================
+       NAV
+       ============================================================ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(10, 9, 8, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       cursor: pointer;
     }
+    .logo-mark {
+      position: relative;
+      width: 40px;
+      height: 40px;
+    }
+    .logo-mark::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251,191,36,0.5), transparent 70%);
+      filter: blur(8px);
+    }
+    .logo-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .logo-text .my { font-style: italic; color: var(--amber); }
+    .logo-tag {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .nav-links {
+      display: none;
+      gap: 4px;
+    }
+    @media (min-width: 768px) {
+      .nav-links { display: flex; }
+    }
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: color 0.25s;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    button:disabled {
-      opacity: 0.6;
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #92400e 100%);
+      color: #1a0f00;
+      border-color: rgba(251, 191, 36, 0.4);
+      box-shadow: 0 8px 30px rgba(217, 119, 6, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 40px rgba(217, 119, 6, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    .btn-primary:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
+      transform: none;
+    }
+    .btn-ghost {
+      background: rgba(245, 241, 234, 0.03);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover {
+      background: rgba(245, 241, 234, 0.06);
+      border-color: var(--border-strong);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(245, 241, 234, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+      transition: all 0.25s;
+    }
+    .pill:hover {
+      background: rgba(251, 191, 36, 0.08);
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .pill-active {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.4);
+      color: var(--amber);
+    }
+
+    /* ============================================================
+       HERO
+       ============================================================ */
+    .hero {
+      position: relative;
+      padding: 60px 0 80px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(245, 241, 234, 0.06) 1px, transparent 0);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 900px;
+      height: 500px;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(251, 191, 36, 0.20), transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      color: var(--amber);
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.75rem);
+      font-weight: 600;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg, #fde047 0%, #fbbf24 40%, #d97706 80%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero-title .sub {
+      display: block;
+      font-style: italic;
+      font-weight: 300;
+      color: var(--muted);
+      font-size: 0.85em;
+    }
+    .hero-sub {
+      margin-top: 16px;
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero-pills {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .hero-pills .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
+    /* ============================================================
+       CARD / CHAT
+       ============================================================ */
+    .card-static {
+      background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: 24px;
+    }
+    .chat-card {
+      margin-top: 32px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 100px rgba(251, 191, 36, 0.06);
+    }
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 12px;
+      background: rgba(251, 191, 36, 0.03);
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #92400e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
+    }
+    .avatar svg { color: #1a0f00; width: 18px; height: 18px; }
+    .avatar-status {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #34d399;
+      border: 2px solid var(--bg-2);
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+    }
+    .chat-name {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-bright);
+      line-height: 1.1;
+    }
+    .chat-meta {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .chat-meta .dot { color: #34d399; }
+    .chat-header-actions { display: flex; gap: 6px; }
+    .chat-action {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(245, 241, 234, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s;
+    }
+    .chat-action:hover {
+      background: rgba(245, 241, 234, 0.06);
+      border-color: var(--border-strong);
+    }
+
+    .chat-messages {
+      padding: 20px;
+      min-height: 380px;
+      max-height: 560px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-messages::-webkit-scrollbar { width: 8px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(245, 241, 234, 0.1); border-radius: 4px; }
+
+    .msg-row { display: flex; align-items: flex-end; gap: 8px; }
+    .msg-row.assistant { justify-content: flex-start; }
+    .msg-row.user { justify-content: flex-end; }
+
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #92400e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .msg-avatar svg { color: #1a0f00; width: 14px; height: 14px; }
+
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .bubble.assistant {
+      background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+      border: 1px solid rgba(251, 191, 36, 0.18);
+      border-top-left-radius: 4px;
+      color: var(--text);
+      animation: chatEnterAssistant 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transform-origin: bottom left;
+    }
+    .bubble.user {
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      color: #1a0f00;
+      border-top-right-radius: 4px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(217, 119, 6, 0.25);
+      animation: chatEnterUser 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transform-origin: bottom right;
+    }
+    .bubble.error {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      color: #fca5a5;
+    }
+
+    @keyframes chatEnterAssistant {
+      0%   { opacity: 0; transform: translateY(14px) translateX(-6px) scale(0.96); filter: blur(4px); }
+      60%  { opacity: 1; filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); filter: blur(0); }
+    }
+    @keyframes chatEnterUser {
+      0%   { opacity: 0; transform: translateY(14px) translateX(6px) scale(0.96); filter: blur(4px); }
+      60%  { opacity: 1; filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); filter: blur(0); }
+    }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 16px;
+    }
+    .typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: typingDot 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    .chat-input-area {
+      padding: 12px 16px;
+      background: rgba(10, 9, 8, 0.5);
+      border-top: 1px solid var(--border);
+    }
+    .chat-input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .chat-input-wrap {
+      flex: 1;
+      background: rgba(245, 241, 234, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: flex-end;
+      transition: border-color 0.25s;
+    }
+    .chat-input-wrap:focus-within {
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+    .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 6px 0;
+      font-size: 14px;
+      max-height: 100px;
+      min-height: 24px;
+      line-height: 1.5;
+    }
+    .chat-send {
+      padding: 12px;
+      border-radius: 16px;
+      flex-shrink: 0;
+    }
+    .chat-footer-note {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .starters {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .starters-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .starters-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* ============================================================
+       TRUST BAR
+       ============================================================ */
+    .trust {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 0;
+    }
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    @media (min-width: 768px) {
+      .trust-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .trust-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .trust-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .trust-icon svg { color: var(--amber); width: 16px; height: 16px; }
+    .trust-title { font-size: 12px; font-weight: 600; color: var(--text-bright); }
+    .trust-text { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ============================================================
+       SECTIONS
+       ============================================================ */
+    .section { padding: 64px 0; }
+    .section-head { text-align: center; max-width: 600px; margin: 0 auto 48px; }
+    .eyebrow {
+      display: inline-block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+    .section-title .light { font-weight: 300; font-style: italic; }
+
+    /* HOW IT WORKS */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    @media (min-width: 768px) {
+      .steps-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .step-card {
+      background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: 24px;
+      padding: 24px;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s;
+    }
+    .step-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .step-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px rgba(251, 191, 36, 0.3);
+    }
+    .step-icon svg { color: #1a0f00; width: 20px; height: 20px; }
+    .step-num {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(251, 191, 36, 0.2);
+    }
+    .step-title {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .step-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* FAQ */
+    .faq-list {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .faq-item {
+      background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .faq-q {
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      text-align: left;
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-bright);
+    }
+    .faq-q svg {
+      color: var(--amber);
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s;
+      flex-shrink: 0;
+    }
+    .faq-item.open .faq-q svg { transform: rotate(180deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+      padding: 0 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .faq-item.open .faq-a {
+      max-height: 300px;
+      padding: 0 20px 20px;
+    }
+
+    /* CONTACT */
+    .contact-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 768px) {
+      .contact-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .contact-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px;
+      background: rgba(245, 241, 234, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: border-color 0.25s;
+    }
+    a.contact-card:hover { border-color: rgba(251, 191, 36, 0.4); }
+    .contact-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .contact-icon svg { color: var(--amber); width: 18px; height: 18px; }
+    .contact-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .contact-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-top: 2px;
+    }
+    .contact-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    .footer {
+      position: relative;
+      margin-top: 80px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .footer-glow div {
+      position: absolute;
+      width: 700px;
+      height: 400px;
+      bottom: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(251, 191, 36, 0.10), transparent 70%);
+      filter: blur(100px);
+    }
+    .footer-inner {
+      position: relative;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 48px;
+      margin-bottom: 64px;
+    }
+    @media (min-width: 1024px) {
+      .footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
+    }
+    .footer-brand { max-width: 380px; }
+    .footer-logo { margin-bottom: 20px; }
+    .footer-tag { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    .footer-countries {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .footer-country {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(251, 191, 36, 0.06);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      color: var(--amber);
+    }
+    .footer-col-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .footer-links { display: flex; flex-direction: column; gap: 12px; }
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+      transition: color 0.25s;
+    }
+    .footer-link svg { width: 14px; height: 14px; color: var(--amber); }
+    .footer-link:hover { color: var(--amber); }
+    .footer-contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .footer-contact-item + .footer-contact-item { margin-top: 12px; }
+    .footer-contact-item svg { width: 16px; height: 16px; color: var(--amber); flex-shrink: 0; margin-top: 2px; }
+    .footer-contact-item .strong { color: var(--text); font-weight: 600; }
+
+    .footer-bottom {
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media (min-width: 768px) {
+      .footer-bottom { flex-direction: row; }
+    }
+
+    /* ============================================================
+       ENTRANCE ANIMATIONS
+       ============================================================ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+    .fade-up {
+      opacity: 0;
+      animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      html { scroll-behavior: auto; }
+      .fade-up { opacity: 1; }
     }
   </style>
 </head>
-<body>
-  <div class="chat-wrap">
-    <h1>FindMyCar Assistant</h1>
-    <div id="messages" class="messages"></div>
-    <form id="chat-form">
-      <input id="chat-input" type="text" placeholder="Ask about your ideal car..." />
-      <button id="send-btn" type="submit">Send</button>
-    </form>
+<body class="grain">
+
+  <!-- Ambient background -->
+  <div class="ambient">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
   </div>
 
+  <div class="page">
+
+    <!-- ============================================================
+         NAV
+         ============================================================ -->
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="#top" class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 48 48" width="40" height="40" style="position:relative;">
+              <defs>
+                <linearGradient id="logoGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fde047"/>
+                  <stop offset="50%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#b45309"/>
+                </linearGradient>
+                <linearGradient id="logoShine" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+              </defs>
+              <path d="M24 2 C13 2 5 10 5 21 C5 33 24 46 24 46 C24 46 43 33 43 21 C43 10 35 2 24 2 Z" fill="url(#logoGold)" stroke="#92400e" stroke-width="0.5"/>
+              <path d="M24 2 C13 2 5 10 5 21 C5 24 6 27 8 30 C8 18 15 8 24 6 C33 8 40 18 40 30 C42 27 43 24 43 21 C43 10 35 2 24 2 Z" fill="url(#logoShine)"/>
+              <g transform="translate(10, 13)">
+                <path d="M2 11 L4 7 Q5 5.5 7 5.5 L21 5.5 Q23 5.5 24 7 L26 11 L26 14 L2 14 Z" fill="#0a0908"/>
+                <circle cx="7" cy="14" r="2.2" fill="#0a0908" stroke="#fde047" stroke-width="0.6"/>
+                <circle cx="21" cy="14" r="2.2" fill="#0a0908" stroke="#fde047" stroke-width="0.6"/>
+                <path d="M5 7.5 L7 6 L13 6 L13 9 L5 9 Z" fill="rgba(251,191,36,0.4)"/>
+                <path d="M14 6 L20 6 L22 9 L14 9 Z" fill="rgba(251,191,36,0.4)"/>
+              </g>
+            </svg>
+          </div>
+          <div>
+            <div class="logo-text">Find<span class="my">My</span>Car</div>
+            <div class="logo-tag">Automotive Intelligence</div>
+          </div>
+        </a>
+
+        <div class="nav-links">
+          <a href="#top" class="nav-link">Discover</a>
+          <a href="#how" class="nav-link">How it works</a>
+          <a href="#faq" class="nav-link">FAQ</a>
+          <a href="#contact" class="nav-link">Contact</a>
+        </div>
+
+        <div class="nav-actions">
+          <button class="btn btn-primary">Sign up</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ============================================================
+         HERO + CHAT
+         ============================================================ -->
+    <section id="top" class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-inner">
+        <div class="badge fade-up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+          AI advisor · Live in NL · BE · DE · PL
+        </div>
+
+        <h1 class="hero-title fade-up delay-1">
+          <span class="grad">Talk to an AI advisor.</span>
+          <span class="sub">Find the right car in minutes.</span>
+        </h1>
+
+        <p class="hero-sub fade-up delay-2">
+          Chat naturally with our advisor — like talking to a friend who happens to know cars. We'll guide you to the right model, then show you offers.
+        </p>
+
+        <div class="hero-pills fade-up delay-2">
+          <span class="label">Market:</span>
+          <span class="pill pill-active">🇳🇱 Netherlands</span>
+          <span class="pill">🇧🇪 Belgium</span>
+          <span class="pill">🇩🇪 Germany</span>
+          <span class="pill">🇵🇱 Poland</span>
+        </div>
+
+        <!-- CHAT CARD -->
+        <div class="card-static chat-card fade-up delay-3">
+          <div class="chat-header">
+            <div class="chat-header-left">
+              <div class="avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+                <span class="avatar-status"></span>
+              </div>
+              <div>
+                <div class="chat-name">FindMyCar Advisor</div>
+                <div class="chat-meta"><span class="dot">●</span> Online · Speaks EN · NL · DE · PL</div>
+              </div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="chat-action" id="newChatBtn" title="Start new chat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                New chat
+              </button>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+
+          <div class="chat-input-area">
+            <div class="chat-input-row">
+              <div class="chat-input-wrap">
+                <textarea
+                  id="chatInput"
+                  class="chat-input"
+                  rows="1"
+                  placeholder="Message your advisor…"
+                  aria-label="Message your advisor"
+                ></textarea>
+              </div>
+              <button class="btn btn-primary chat-send" id="sendBtn" aria-label="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </div>
+            <div class="chat-footer-note">
+              Your advisor remembers the conversation · Available in 4 languages
+            </div>
+          </div>
+        </div>
+
+        <!-- STARTERS -->
+        <div class="starters fade-up delay-4" id="startersSection">
+          <div class="starters-label">Or try one of these</div>
+          <div class="starters-list" id="startersList">
+            <button class="pill starter">I need a family car for under €20,000</button>
+            <button class="pill starter">Find me a reliable electric car for city driving</button>
+            <button class="pill starter">I honestly have no idea where to start</button>
+            <button class="pill starter">What can I get for €10,000?</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TRUST BAR
+         ============================================================ -->
+    <section class="trust">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-3 8 3v7Z"/></svg>
+          </div>
+          <div>
+            <div class="trust-title">Honest & unbiased</div>
+            <div class="trust-text">We don't take kickbacks.</div>
+          </div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+          </div>
+          <div>
+            <div class="trust-title">Plain language</div>
+            <div class="trust-text">No car jargon needed.</div>
+          </div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div>
+            <div class="trust-title">4 countries</div>
+            <div class="trust-text">NL, BE, DE, PL.</div>
+          </div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7M5 22V10"/></svg>
+          </div>
+          <div>
+            <div class="trust-title">Model-first</div>
+            <div class="trust-text">Pick the car, then see offers.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         HOW IT WORKS
+         ============================================================ -->
+    <section id="how" class="section">
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2 class="section-title">Three <span class="light">simple</span> steps.</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </div>
+            <div class="step-num">01</div>
+          </div>
+          <div class="step-title">Chat with the advisor</div>
+          <div class="step-text">Tell our AI what you need in your own words. It will ask follow-up questions like a real dealer would.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+            </div>
+            <div class="step-num">02</div>
+          </div>
+          <div class="step-title">Get smart recommendations</div>
+          <div class="step-text">Around 5 car models picked for you, with clear reasons why each one fits.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6"/></svg>
+            </div>
+            <div class="step-num">03</div>
+          </div>
+          <div class="step-title">Then see the offers</div>
+          <div class="step-text">Pick a model, and we'll show you real offers from dealers and private sellers nearby.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FAQ
+         ============================================================ -->
+    <section id="faq" class="section" style="border-top: 1px solid var(--border);">
+      <div class="section-head">
+        <div class="eyebrow">Help</div>
+        <h2 class="section-title">Frequently <span class="light">asked.</span></h2>
+      </div>
+      <div class="faq-list" id="faqList">
+        <div class="faq-item open">
+          <button class="faq-q">
+            How is this different from other car websites?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">Other sites are built for people who already know what car they want. We recommend models first based on what you actually need — then show you offers only after you've picked a model.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Is FindMyCar free to use?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">Yes, completely free. We don't charge users anything, and we don't take commissions on sales.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Where do your listings come from?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">Listings come from partner dealer feeds and private listings across NL, BE, DE and PL.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Do I need an account?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">No — you can browse and search freely. After a few searches we'll suggest creating one so you can save your shortlist and search history across devices.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Which countries do you support?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">Netherlands, Belgium, Germany and Poland at launch. France and others will follow.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            How accurate are your recommendations?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="faq-a">Our AI parses your description and matches it to car models based on body type, fuel, price, and common use cases. It's guidance, not gospel — always test-drive before you buy.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CONTACT
+         ============================================================ -->
+    <section id="contact" class="section" style="border-top: 1px solid var(--border);">
+      <div class="section-head">
+        <div class="eyebrow">Get in touch</div>
+        <h2 class="section-title">We'd love to <span class="light">hear from you.</span></h2>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+          </div>
+          <div>
+            <div class="contact-label">CEO</div>
+            <div class="contact-value">Fryderyk Strycharz</div>
+            <div class="contact-sub">Founder & Chief Executive Officer</div>
+          </div>
+        </div>
+
+        <a href="tel:+48798353930" class="contact-card">
+          <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div>
+            <div class="contact-label">Phone</div>
+            <div class="contact-value">+48 798 353 930</div>
+            <div class="contact-sub">Tap to call</div>
+          </div>
+        </a>
+
+        <a href="mailto:06fryderyk@gmail.com" class="contact-card">
+          <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+          </div>
+          <div>
+            <div class="contact-label">Email</div>
+            <div class="contact-value">06fryderyk@gmail.com</div>
+            <div class="contact-sub">Tap to compose</div>
+          </div>
+        </a>
+
+        <div class="contact-card">
+          <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <div class="contact-label">Address</div>
+            <div class="contact-value">Gerard Doustraat 64-1</div>
+            <div class="contact-sub">HQ</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FOOTER
+         ============================================================ -->
+    <footer class="footer">
+      <div class="footer-glow"><div></div></div>
+      <div class="footer-inner">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo logo">
+              <div class="logo-mark">
+                <svg viewBox="0 0 48 48" width="64" height="64" style="position:relative;">
+                  <use href="#" />
+                  <defs>
+                    <linearGradient id="logoGold2" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#fde047"/>
+                      <stop offset="50%" stop-color="#fbbf24"/>
+                      <stop offset="100%" stop-color="#b45309"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M24 2 C13 2 5 10 5 21 C5 33 24 46 24 46 C24 46 43 33 43 21 C43 10 35 2 24 2 Z" fill="url(#logoGold2)" stroke="#92400e" stroke-width="0.5"/>
+                  <g transform="translate(10, 13)">
+                    <path d="M2 11 L4 7 Q5 5.5 7 5.5 L21 5.5 Q23 5.5 24 7 L26 11 L26 14 L2 14 Z" fill="#0a0908"/>
+                    <circle cx="7" cy="14" r="2.2" fill="#0a0908" stroke="#fde047" stroke-width="0.6"/>
+                    <circle cx="21" cy="14" r="2.2" fill="#0a0908" stroke="#fde047" stroke-width="0.6"/>
+                  </g>
+                </svg>
+              </div>
+              <div>
+                <div class="logo-text" style="font-size: 28px;">Find<span class="my">My</span>Car</div>
+                <div class="logo-tag">Automotive Intelligence</div>
+              </div>
+            </div>
+            <p class="footer-tag">The friendliest way to find your next car. Built for Europe — honest, AI-guided, and always on your side.</p>
+            <div class="footer-countries">
+              <span class="footer-country">🇳🇱 NL</span>
+              <span class="footer-country">🇧🇪 BE</span>
+              <span class="footer-country">🇩🇪 DE</span>
+              <span class="footer-country">🇵🇱 PL</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Quick Links</div>
+            <div class="footer-links">
+              <a href="#top" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+                Discover
+              </a>
+              <a href="#how" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                How it works
+              </a>
+              <a href="#faq" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                FAQ
+              </a>
+              <a href="#contact" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+                Contact
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Contact</div>
+            <div class="footer-contact-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+              <span><span class="strong">Fryderyk Strycharz</span><br><span style="font-size:11px;">CEO & Founder</span></span>
+            </div>
+            <div class="footer-contact-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+              <a href="mailto:06fryderyk@gmail.com">06fryderyk@gmail.com</a>
+            </div>
+            <div class="footer-contact-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <a href="tel:+48798353930">+48 798 353 930</a>
+            </div>
+            <div class="footer-contact-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Gerard Doustraat 64-1</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Legal</div>
+            <div class="footer-links">
+              <a href="#" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-3 8 3v7Z"/></svg>
+                Privacy Policy
+              </a>
+              <a href="#" class="footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                Terms of Service
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>✦ © 2026 FindMyCar · Automotive Intelligence Platform</div>
+          <div>🇳🇱 🇧🇪 🇩🇪 🇵🇱 &nbsp; Available in 4 countries</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
   <script>
-    const form = document.getElementById("chat-form");
-    const input = document.getElementById("chat-input");
-    const messagesEl = document.getElementById("messages");
-    const sendBtn = document.getElementById("send-btn");
+    // ── State ──────────────────────────────────────────────────
+    const WELCOME_MESSAGE = "Hey 👋 I'm your FindMyCar advisor. I'm not a salesperson, and I'm not going to throw cars at you right away. I'd much rather start with a normal chat — tell me a bit about yourself, what's going on, what made you start looking. Even if you've got no clue where to begin, that's completely fine. 🙂";
 
-    const messages = [];
+    let messages = [
+      { role: "assistant", content: WELCOME_MESSAGE }
+    ];
+    let isLoading = false;
 
-    function addMessage(role, content) {
+    // ── DOM refs ───────────────────────────────────────────────
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const newChatBtn = document.getElementById("newChatBtn");
+    const startersSection = document.getElementById("startersSection");
+
+    // ── Render messages ────────────────────────────────────────
+    function escapeHtml(str) {
       const div = document.createElement("div");
-      div.className = `msg ${role}`;
-      div.textContent = content;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      div.textContent = str;
+      return div.innerHTML;
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    function renderMessages() {
+      chatMessages.innerHTML = "";
+      messages.forEach((m) => {
+        const row = document.createElement("div");
+        row.className = "msg-row " + (m.role === "user" ? "user" : "assistant");
 
-      const text = input.value.trim();
-      if (!text) return;
+        if (m.role === "assistant") {
+          const av = document.createElement("div");
+          av.className = "msg-avatar";
+          av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>';
+          row.appendChild(av);
+        }
 
-      addMessage("user", text);
-      messages.push({ role: "user", content: text });
-      input.value = "";
+        const bubble = document.createElement("div");
+        bubble.className = "bubble " + (m.role === "user" ? "user" : "assistant");
+        if (m.error) bubble.classList.add("error");
+        bubble.innerHTML = escapeHtml(m.content);
+        row.appendChild(bubble);
+
+        chatMessages.appendChild(row);
+      });
+
+      if (isLoading) {
+        const row = document.createElement("div");
+        row.className = "msg-row assistant";
+        const av = document.createElement("div");
+        av.className = "msg-avatar";
+        av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>';
+        row.appendChild(av);
+        const bubble = document.createElement("div");
+        bubble.className = "bubble assistant typing";
+        bubble.innerHTML = "<span></span><span></span><span></span>";
+        row.appendChild(bubble);
+        chatMessages.appendChild(row);
+      }
+
+      // Scroll to bottom
+      requestAnimationFrame(() => {
+        chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
+      });
+
+      // Hide starters once a user has sent a message
+      if (messages.length > 1) {
+        startersSection.style.display = "none";
+      } else {
+        startersSection.style.display = "";
+      }
+    }
+
+    // ── Send message to /api/chat ──────────────────────────────
+    async function sendMessage(text) {
+      const trimmed = text.trim();
+      if (!trimmed || isLoading) return;
+
+      messages.push({ role: "user", content: trimmed });
+      isLoading = true;
       sendBtn.disabled = true;
+      renderMessages();
 
       try {
-        const res = await fetch("/api/chat", {
+        const response = await fetch("/api/chat", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ messages })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: messages.map(m => ({ role: m.role, content: m.content })) }),
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          addMessage("assistant", "Error: " + (data.error || "Something went wrong."));
-        } else {
-          addMessage("assistant", data.reply);
-          messages.push({ role: "assistant", content: data.reply });
+        if (!response.ok) {
+          throw new Error("Server returned " + response.status);
         }
+
+        const data = await response.json();
+
+        // Try several common response shapes from /api/chat
+        let assistantText = null;
+        if (typeof data === "string") {
+          assistantText = data;
+        } else if (data && typeof data.reply === "string") {
+          assistantText = data.reply;
+        } else if (data && typeof data.message === "string") {
+          assistantText = data.message;
+        } else if (data && data.message && typeof data.message.content === "string") {
+          assistantText = data.message.content;
+        } else if (data && typeof data.content === "string") {
+          assistantText = data.content;
+        } else if (data && Array.isArray(data.choices) && data.choices[0]) {
+          assistantText = data.choices[0].message?.content || data.choices[0].text;
+        }
+
+        if (!assistantText) {
+          throw new Error("Unexpected response format from /api/chat");
+        }
+
+        messages.push({ role: "assistant", content: assistantText });
       } catch (err) {
-        addMessage("assistant", "Network error. Please try again.");
+        console.error(err);
+        messages.push({
+          role: "assistant",
+          error: true,
+          content: "Sorry, I couldn't reach the advisor right now. " + (err && err.message ? "(" + err.message + ")" : "") + " Please try again in a moment."
+        });
       } finally {
+        isLoading = false;
         sendBtn.disabled = false;
+        renderMessages();
+        chatInput.focus();
+      }
+    }
+
+    // ── Input handlers ─────────────────────────────────────────
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const v = chatInput.value;
+        chatInput.value = "";
+        autoGrow();
+        sendMessage(v);
       }
     });
+
+    function autoGrow() {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + "px";
+    }
+    chatInput.addEventListener("input", autoGrow);
+
+    sendBtn.addEventListener("click", () => {
+      const v = chatInput.value;
+      chatInput.value = "";
+      autoGrow();
+      sendMessage(v);
+    });
+
+    newChatBtn.addEventListener("click", () => {
+      if (isLoading) return;
+      messages = [{ role: "assistant", content: WELCOME_MESSAGE }];
+      renderMessages();
+      chatInput.focus();
+    });
+
+    // Starter pills
+    document.querySelectorAll(".starter").forEach(el => {
+      el.addEventListener("click", () => sendMessage(el.textContent.trim()));
+    });
+
+    // FAQ accordion
+    document.querySelectorAll(".faq-q").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.parentElement.classList.toggle("open");
+      });
+    });
+
+    // Country pill toggle (visual only)
+    document.querySelectorAll(".hero-pills .pill").forEach(p => {
+      p.addEventListener("click", () => {
+        document.querySelectorAll(".hero-pills .pill").forEach(x => x.classList.remove("pill-active"));
+        p.classList.add("pill-active");
+      });
+    });
+
+    // Initial render
+    renderMessages();
   </script>
 </body>
 </html>
